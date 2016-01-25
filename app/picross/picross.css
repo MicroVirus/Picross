@@ -1,0 +1,51 @@
+.picross-table {
+    /* border: 1px solid black; */
+    table-layout: fixed;
+}
+
+.picross-table th, .picross-table td {
+    width: 1.4em;
+    height: 1.4em;
+    border: 1px solid black;
+    padding: 1px 1px 1px 1px;
+}
+
+.picross-table .field-ticked, .picross-table .field-unticked {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.picross-table th {
+    font-weight: normal;
+}
+
+.picross-table .ul-corner {
+    border: 0;
+}
+
+.picross-table .left-header {
+    border-right: solid 3px black;
+}
+
+.picross-table .top-header {
+    border-bottom: solid 3px black;
+}
+
+.picross-table .col-separator {
+    border-left: 3px solid #606060;
+}
+.picross-table .row-separator {
+    border-top: 3px solid #606060;
+}
+
+/* Displaying the various states of the picross field */
+.picross-table .field-ticked
+{
+    background-color: black;
+}
+
+.picross-table .field-unticked
+{
+    background-color: white;
+}

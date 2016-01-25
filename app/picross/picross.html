@@ -1,0 +1,22 @@
+<link rel="stylesheet" href="picross/picross.css">
+
+<h1>Picross</h1>
+
+<p>Picross of {{picross.width}} x {{picross.height}}</p>
+<table class="picross-table">
+    <!-- Hint headers -->
+    <tr ng-repeat="headerRow in topHeaderRows">
+        <th ng-repeat="leftHeaderRow in leftHeaderRows[0] track by $index" class="ul-corner"></th>
+        <!-- TODO: Restore  top-header left-header  classes on the correct ul-corner elements. Also, need to fix a lot of border stuff. -->
+        <th ng-repeat="col in headerRow track by $index" class="top-header {{($index > 0 && ($index % 5) == 0) ? 'col-separator' : ''}}">{{col}}</th>
+    </tr>
+    <tr ng-repeat="headerRow in leftHeaderRows">
+        <th ng-repeat="col in headerRow track by $index" class="left-header {{($index > 0 && ($index % 5) == 0) ? 'row-separator' : ''}}">{{col}}</th>
+        <td ng-repeat="col in picross.columnHints" class="{{($index > 0 && ($index % 5) == 0) ? 'col-separator' : ''}} {{($parent.$index > 0 && ($parent.$index % 5) == 0) ? 'row-separator' : ''}}">
+            <span class="{{getStyleForImage($parent.$index, $index)}}"></span>
+        </td>
+    </tr>
+</table>
+
+
+
