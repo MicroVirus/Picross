@@ -21,6 +21,19 @@
 }
 
 
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;   /* Chrome/Safari/Opera */
+    -khtml-user-select: none;    /* Konqueror */
+    -moz-user-select: none;      /* Firefox */
+    -ms-user-select: none;       /* IE/Edge */
+    user-select: none;           /* non-prefixed version, currently not supported by any browser */
+}
+
+
+
+
 /* Upper-left corner area of the picross table, the part that is sandwiched between headers */
 .picross-table .corner-empty-piece, .picross-table .corner-right-piece, .picross-table .corner-bottom-piece  {
     border: 0;
@@ -56,6 +69,8 @@
 .picross-table .left-header-right-cell {
     border-right: solid 3px black;
 }
+
+
 
 
 

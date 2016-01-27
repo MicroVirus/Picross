@@ -3,7 +3,7 @@
 <h1>Picross</h1>
 
 <p>Picross of {{picross.width}} x {{picross.height}}</p>
-<table class="picross-table" ondragstart="return false;" ondrop="return false;">
+<table class="picross-table noselect" ondragstart="return false;" ondrop="return false;">
     <!-- Hint headers -->
     <tr ng-repeat="headerRow in topHeaderRows">
         <!-- NB: I somewhat dislike the leftHeaderRows[0] here, but c'est la vie. -->
