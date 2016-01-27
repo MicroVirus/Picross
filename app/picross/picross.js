@@ -36,10 +36,24 @@ angular.module('picross.picross', ['ngRoute'])
         for (var col = 0; col < width; col++)
         {
             var hint = hints[col];
-            var index = headerRow - (topHeaderSize - hint.length);
-            header.push(index >= 0 ? hint[index] : "");
+            var index = topHeaderIndexToColumnHintIndex(col, headerRow);
+            header.push(index != null ? hint[index] : "");
         }
         return header;
+    }
+
+    // Returns null if the index falls outside of the hint. 0 <= index < topHeaderSize.
+    function topHeaderIndexToColumnHintIndex(col, index)
+    {
+        var hintIndex = index - (topHeaderSize - $scope.picross.columnHints[col].length);
+        return (hintIndex >= 0 ? hintIndex : null);
+    }
+
+    // Returns null if the index falls outside of the hint. 0 <= index < leftHeaderSize.
+    function leftHeaderIndexToRowHintIndex(row, index)
+    {
+        var hintIndex = index - (leftHeaderSize - $scope.picross.rowHints[row].length);
+        return (hintIndex >= 0 ? hintIndex : null);
     }
 
     // Testing the picross by filling rows with random numbers; need to be become objects (arrays, probably) later on.
@@ -115,6 +129,39 @@ angular.module('picross.picross', ['ngRoute'])
     $scope.getStyleForImage = function (row, col)
     {
         return $scope.picross.image[row * $scope.picross.width + col] ? 'field-ticked' : 'field-unticked';
+    }
+
+    $scope.getPicrossTableCornerStyle = function (row, col)
+    {
+        var isBottom = (row == topHeaderSize-1), isRight = (col == leftHeaderSize-1);
+        if (isBottom && isRight) return 'corner-bottom-piece corner-right-piece';
+        else if (isBottom) return 'corner-bottom-piece';
+        else if (isRight) return 'corner-right-piece';
+        else return 'corner-empty-piece';
+    }
+
+    $scope.getPicrossTableTopHeaderStyle = function (row, col)
+    {
+        var classes = '';
+        var emptyCell = (topHeaderIndexToColumnHintIndex(col, row) == null);
+        if (col > 0 && col % 5 == 0) classes += 'col-separator ';
+        if (emptyCell) classes += 'empty-header-cell ';
+        else classes += 'top-header-cell ';
+        if (row == topHeaderSize-1) classes += 'top-header-bottom-cell ';
+
+        return classes;
+    }
+
+    $scope.getPicrossTableLeftHeaderStyle = function (row, col)
+    {
+        var classes = '';
+        var emptyCell = (leftHeaderIndexToRowHintIndex(row, col) == null);
+        if (row > 0 && row % 5 == 0) classes += 'row-separator ';
+        if (emptyCell) classes += 'empty-header-cell ';
+        else classes += 'left-header-cell ';
+        if (col == leftHeaderSize-1) classes += 'left-header-right-cell ';
+
+        return classes;
     }
 
 

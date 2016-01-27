@@ -20,24 +20,46 @@
     font-weight: normal;
 }
 
-.picross-table .ul-corner {
+
+/* Upper-left corner area of the picross table, the part that is sandwiched between headers */
+.picross-table .corner-empty-piece, .picross-table .corner-right-piece, .picross-table .corner-bottom-piece  {
     border: 0;
 }
-
-.picross-table .left-header {
+.picross-table .corner-right-piece {
     border-right: solid 3px black;
 }
-
-.picross-table .top-header {
+.picross-table .corner-bottom-piece {
     border-bottom: solid 3px black;
 }
 
+/* Top and left header pieces */
+.picross-table .empty-header-cell {
+    border: 0;
+}
 .picross-table .col-separator {
     border-left: 3px solid #606060;
+}
+.picross-table .top-header-cell, .picross-table .top-header-bottom-cell {
+    border-top: 0;
+    border-bottom: 0;
+}
+.picross-table .top-header-bottom-cell {
+    border-bottom: solid 3px black;
 }
 .picross-table .row-separator {
     border-top: 3px solid #606060;
 }
+.picross-table .left-header-cell, .picross-table .left-header-right-cell {
+    border-left: 0;
+    border-right: 0;
+}
+.picross-table .left-header-right-cell {
+    border-right: solid 3px black;
+}
+
+
+
+
 
 /* Displaying the various states of the picross field */
 .picross-table .field-ticked
