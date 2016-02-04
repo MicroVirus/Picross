@@ -12,7 +12,11 @@
     </tr>
     <tr ng-repeat="headerRow in leftHeaderRows">
         <th ng-repeat="col in headerRow track by $index" class="{{getPicrossTableLeftHeaderStyle($parent.$index, $index)}}">{{col}}</th>
-        <td ng-repeat="col in picross.columnHints" class="{{($index > 0 && ($index % 5) == 0) ? 'col-separator' : ''}} {{($parent.$index > 0 && ($parent.$index % 5) == 0) ? 'row-separator' : ''}}">
+        <td ng-repeat="col in picross.columnHints"
+            ng-mousedown="tableCellMouseDown($event, $parent.$index, $index)"
+            ng-mouseup="tableCellMouseUp($event, $parent.$index, $index)"
+            class="{{getPicrossTableCellStyle($parent.$index, $index)}}">
+
             <span class="{{getStyleForImage($parent.$index, $index)}}"></span>
         </td>
     </tr>

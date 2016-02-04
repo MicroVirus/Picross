@@ -165,6 +165,34 @@ angular.module('picross.picross', ['ngRoute'])
     }
 
 
+    $scope.getPicrossTableCellStyle = function (row, col)
+    {
+        var classes = '';
+
+        if (row > 0 && (row % 5) == 0) classes += 'row-separator ';
+        if (col > 0 && (col % 5) == 0) classes += 'col-separator ';
+
+        return classes;
+    }
+
+
+    ///
+    /// Input handling
+    ///
+
+    $scope.tableCellMouseDown = function (event, row, col)
+    {
+        event = event || window.event;
+
+    }
+    $scope.tableCellMouseUp = function (event, row, col)
+    {
+        event = event || window.event;
+
+    }
+
+
+
     ///
     /// Picross object
     ///
