@@ -9,6 +9,19 @@ angular.module('picross')
     });
 }])
 
+// ngRightClick taken from http://stackoverflow.com/questions/15731634/how-do-i-handle-right-click-events-in-angular-js/15732476#15732476
+.directive('ngContextmenu', function($parse) {
+    return function(scope, element, attrs) {
+        var fn = $parse(attrs.ngContextmenu);
+        element.bind('contextmenu', function(event) {
+            scope.$apply(function() {
+                event.preventDefault();
+                fn(scope, {$event:event});
+            });
+        });
+    };
+})
+
 .controller('PicrossCtrl', ['$scope', 'picrossFactory', function($scope, picrossFact) {
     // Private member variables
     var picross;
@@ -37,7 +50,7 @@ angular.module('picross')
     $scope.tableCellMouseDown               = tableCellMouseDown;
     $scope.tableCellMouseUp                 = tableCellMouseUp;
     $scope.tableCellMouseEnter              = tableCellMouseEnter;
-
+    $scope.tableContextMenuHandler          = tableContextMenuHandler;
 
 
     ///
@@ -160,6 +173,11 @@ angular.module('picross')
             mouseInput.hover.row = row;
             mouseInput.hover.col = col;
         }
+    }
+    function tableContextMenuHandler(event, row, col)
+    {
+        event = event || window.event;
+        return false;
     }
     // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
 
