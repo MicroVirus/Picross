@@ -15,9 +15,10 @@
         <td ng-repeat="col in picross.columnHints"
             ng-mousedown="tableCellMouseDown($event, $parent.$index, $index)"
             ng-mouseup="tableCellMouseUp($event, $parent.$index, $index)"
+            ng-mouseenter="tableCellMouseEnter($event, $parent.$index, $index)"
             class="{{getPicrossTableCellStyle($parent.$index, $index)}}">
 
-            <span class="{{getStyleForImage($parent.$index, $index)}}"></span>
+            <span class="{{getStyleForField($parent.$index, $index)}}"></span>
         </td>
     </tr>
 </table>

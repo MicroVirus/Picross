@@ -27,6 +27,7 @@ angular.module('picross')
     $scope.topHeaderRows                    = topHeaderFromHints(picross, topHeaderSize);
     $scope.leftHeaderRows                   = leftHeaderFromHints(picross, leftHeaderSize);
     // CSS styles for the HTML elements based on the current picross state
+    $scope.getStyleForField                 = getStyleForField;
     $scope.getStyleForImage                 = getStyleForImage;
     $scope.getPicrossTableCornerStyle       = getPicrossTableCornerStyle;
     $scope.getPicrossTableTopHeaderStyle    = getPicrossTableTopHeaderStyle;
@@ -35,6 +36,7 @@ angular.module('picross')
     /// Input handling
     $scope.tableCellMouseDown               = tableCellMouseDown;
     $scope.tableCellMouseUp                 = tableCellMouseUp;
+    $scope.tableCellMouseEnter              = tableCellMouseEnter;
 
 
 
@@ -54,6 +56,15 @@ angular.module('picross')
     ///
     /// View functions
     ///
+
+    function getStyleForField(row, col)
+    {
+        var field = picross.field[row * picross.width + col];
+        if (field == picross.Unticked) return 'field-unticked';
+        else if (field == picross.Ticked) return 'field-ticked';
+        else if (field == picross.Crossed) return 'field-crossed';
+        else throw "Bad field value";
+    }
 
     function getStyleForImage(row, col)
     {
@@ -109,16 +120,48 @@ angular.module('picross')
     /// Input handling
     ///
 
+    var mouseInput = {pressed: false, start: {row: undefined, col: undefined}, hover: {row: undefined, col: undefined}};
+
     function tableCellMouseDown(event, row, col)
     {
         event = event || window.event;
+        if (event.button == 0)
+        {
+            mouseInput.pressed = true;
+            mouseInput.start.row = row;
+            mouseInput.start.col = col;
 
+            $scope.picross.field[row * picross.width + col] = picross.Ticked;
+        }
     }
     function tableCellMouseUp(event, row, col)
     {
         event = event || window.event;
 
+        mouseInput.pressed = false;
+        mouseInput.start.row = row;
+        mouseInput.start.col = col;
     }
+    function tableCellMouseEnter(event, row, col)
+    {
+        event = event || window.event;
+
+        // If the mouse went 'up!' outside our area, cancel the dragging
+        // TODO: If you add WHICH button to mouseInput, also respond to if that one is no longer clicked.
+        //       Use buttons rather than button property.
+        if (event.buttons == 0)
+        {
+            mouseInput.pressed = false;
+        }
+
+        if (event.button == 0 && mouseInput.pressed)
+        {
+            picross.field[row * picross.width + col] = picross.Ticked;
+            mouseInput.hover.row = row;
+            mouseInput.hover.col = col;
+        }
+    }
+    // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
 
 
 
