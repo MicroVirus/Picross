@@ -74,11 +74,15 @@ angular.module('picross')
 
     function getStyleForField(row, col)
     {
+        var classes = '';
         var field = picross.field[row * picross.width + col];
-        if (field == picross.Unticked) return 'field-unticked';
-        else if (field == picross.Ticked) return 'field-ticked';
-        else if (field == picross.Crossed) return 'field-crossed';
+
+        if (field == picross.Unticked) classes += 'field-unticked ';
+        else if (field == picross.Ticked) classes += 'field-ticked ';
+        else if (field == picross.Crossed) classes += 'field-crossed ';
         else throw "Bad field value";
+
+        return classes;
     }
 
     function getStyleForImage(row, col)
@@ -104,6 +108,9 @@ angular.module('picross')
         else classes += 'top-header-cell ';
         if (row == topHeaderSize-1) classes += 'top-header-bottom-cell ';
 
+        if (isColDragActive(col)) classes += 'drag-active ';
+        else if (col == mouseInput.hover.col) classes += 'hover-active ';
+
         return classes;
     }
 
@@ -116,9 +123,11 @@ angular.module('picross')
         else classes += 'left-header-cell ';
         if (col == leftHeaderSize-1) classes += 'left-header-right-cell ';
 
+        if (isRowDragActive(row)) classes += 'drag-active ';
+        else if (row == mouseInput.hover.row) classes += 'hover-active ';
+
         return classes;
     }
-
 
     function getPicrossTableCellStyle(row, col)
     {
@@ -127,7 +136,18 @@ angular.module('picross')
         if (row > 0 && (row % 5) == 0) classes += 'row-separator ';
         if (col > 0 && (col % 5) == 0) classes += 'col-separator ';
 
+        if (isRowDragActive(row) || isColDragActive(col)) classes += 'drag-active ';
+
         return classes;
+    }
+
+    function isRowDragActive(row)
+    {
+        return mouseInput.pressed && mouseInput.drag.row == row;
+    }
+    function isColDragActive(col)
+    {
+        return mouseInput.pressed && mouseInput.drag.col == col;
     }
 
 
@@ -146,9 +166,12 @@ angular.module('picross')
     buttonToTicking[MiddleButton] = picross.Unticked;
 
     var mouseInput = {
+        // Pressed state
         pressed: false,
         button: LeftButton,
         start: {fieldValue: picross.Unticked, row: undefined, col: undefined},
+        drag: {row: undefined, col: undefined},
+        // Non-pressed state
         hover: {row: undefined, col: undefined}
     };
 
@@ -175,6 +198,9 @@ angular.module('picross')
     {
         event = event || $window.event;
 
+        mouseInput.hover.row = row;
+        mouseInput.hover.col = col;
+
         // If the mouse went 'up' outside our area, cancel the ticking
         if (mouseInput.pressed && (event.buttons & mouseInput.button) == 0)
         {
@@ -197,8 +223,8 @@ angular.module('picross')
 
         if (mouseInput.pressed)
         {
-            mouseInput.hover.row = row;
-            mouseInput.hover.col = col;
+            mouseInput.drag.row = row;
+            mouseInput.drag.col = col;
             performTick(buttonToTicking[mouseInput.button], row, col);
         }
     }
@@ -216,8 +242,8 @@ angular.module('picross')
         mouseInput.start.fieldValue = picross.field[row * picross.width + col];
         mouseInput.start.row = row;
         mouseInput.start.col = col;
-        mouseInput.hover.row = row;
-        mouseInput.hover.col = col;
+        mouseInput.drag.row = row;
+        mouseInput.drag.col = col;
     }
 
     function endTickDrag(button, row, col)

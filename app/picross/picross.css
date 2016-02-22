@@ -82,20 +82,27 @@
 
 
 /* Displaying the various states of the picross field */
-.picross-table .field-ticked
-{
+.picross-table .field-ticked {
     background-color: black;
 }
 
-.picross-table .field-unticked
-{
+.picross-table .field-unticked {
     background-color: inherit;
 }
 
-.picross-table .field-crossed
-{
+.picross-table .field-crossed {
     background-color: inherit;
     background-image: url("Cross.svg");
     background-repeat: no-repeat;
     background-position: center;
+}
+
+
+
+/* Hover/drag effects for picross field/header */
+.picross-table .hover-active {
+    background-color: rgba(170,170,255,0.2);
+}
+.picross-table .drag-active {
+    background-color: rgba(170,170,255,0.2);
 }
