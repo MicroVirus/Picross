@@ -28,6 +28,8 @@ angular.module('picross')
     var picross;
     var topHeaderSize;
     var leftHeaderSize;
+    var sharedView;
+    var view;
 
 
     // Initialise member variables
@@ -39,20 +41,25 @@ angular.module('picross')
     ///
 
     $scope.picross                          = picross;
+    // Note: the undefined functions are bound to a view at activation and view-switching.
+    // CSS styles for the HTML elements based on the current picross state
+    $scope.getStyleForField                 = undefined;
+    $scope.getStyleForImage                 = undefined;
+    $scope.getPicrossTableCornerStyle       = undefined;
+    $scope.getPicrossTableTopHeaderStyle    = undefined;
+    $scope.getPicrossTableLeftHeaderStyle   = undefined;
+    $scope.getPicrossTableCellStyle         = undefined;
+    /// Input handling
+    $scope.tableCellMouseDown               = undefined;
+    $scope.tableCellMouseUp                 = undefined;
+    $scope.tableCellMouseEnter              = undefined;
+    $scope.tableContextMenuHandler          = undefined;
+
+    bindViewToScope(view);
+
     $scope.topHeaderRows                    = topHeaderFromHints(picross, topHeaderSize);
     $scope.leftHeaderRows                   = leftHeaderFromHints(picross, leftHeaderSize);
-    // CSS styles for the HTML elements based on the current picross state
-    $scope.getStyleForField                 = getStyleForField;
-    $scope.getStyleForImage                 = getStyleForImage;
-    $scope.getPicrossTableCornerStyle       = getPicrossTableCornerStyle;
-    $scope.getPicrossTableTopHeaderStyle    = getPicrossTableTopHeaderStyle;
-    $scope.getPicrossTableLeftHeaderStyle   = getPicrossTableLeftHeaderStyle;
-    $scope.getPicrossTableCellStyle         = getPicrossTableCellStyle;
-    /// Input handling
-    $scope.tableCellMouseDown               = tableCellMouseDown;
-    $scope.tableCellMouseUp                 = tableCellMouseUp;
-    $scope.tableCellMouseEnter              = tableCellMouseEnter;
-    $scope.tableContextMenuHandler          = tableContextMenuHandler;
+
 
 
     ///
@@ -65,7 +72,158 @@ angular.module('picross')
         // Calculate top and left header sizes
         topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
         leftHeaderSize = Math.max.apply(Math, picross.rowHints.map(function (arr) {return arr.length;}));
+        // Activate a view
+        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize);
+        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize);
     }
+
+    function bindViewToScope(view)
+    {
+        // CSS styles for the HTML elements based on the current picross state
+        $scope.getStyleForField                 = view.getStyleForField.bind(view);
+        $scope.getStyleForImage                 = view.getStyleForImage.bind(view);
+        $scope.getPicrossTableCornerStyle       = view.getPicrossTableCornerStyle.bind(view);
+        $scope.getPicrossTableTopHeaderStyle    = view.getPicrossTableTopHeaderStyle.bind(view);
+        $scope.getPicrossTableLeftHeaderStyle   = view.getPicrossTableLeftHeaderStyle.bind(view);
+        $scope.getPicrossTableCellStyle         = view.getPicrossTableCellStyle.bind(view);
+        /// Input handling
+        $scope.tableCellMouseDown               = view.tableCellMouseDown.bind(view);
+        $scope.tableCellMouseUp                 = view.tableCellMouseUp.bind(view);
+        $scope.tableCellMouseEnter              = view.tableCellMouseEnter.bind(view);
+        $scope.tableContextMenuHandler          = view.tableContextMenuHandler.bind(view);
+    }
+
+
+
+    // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
+    // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
+    // TODO: Also use the picross-container enter/leave event (or maybe the other one) to your advantage
+
+
+
+    ///
+    /// Functions to infer size of top and left headers from the row and column hints
+    ///
+
+    function topHeaderFromHints(picross, topHeaderSize)
+    {
+        return rangeArray(0, topHeaderSize).map(
+            getTopHeaderRow.bind(null, picross.width, picross.columnHints, topHeaderSize));
+    }
+
+    function leftHeaderFromHints(picross, leftHeaderSize)
+    {
+        return rangeArray(0, picross.height).map(
+            function (hints, leftHeaderSize, row) {
+                var hint = hints[row];
+                var pad = leftHeaderSize - hint.length;
+                return createArray(pad, "").concat(hint);
+            }.bind(null, picross.rowHints, leftHeaderSize));
+    }
+
+    function getTopHeaderRow(width, hints, topHeaderSize, headerRow)
+    {
+        var header = [];
+        for (var col = 0; col < width; col++)
+        {
+            var hint = hints[col];
+            var index = view.topHeaderIndexToColumnHintIndex(col, headerRow, topHeaderSize);
+            header.push(index != null ? hint[index] : "");
+        }
+        return header;
+    }
+
+
+    ///
+    /// Picross generation
+    ///
+
+    function generatePicross(width, height)
+    {
+        return picrossFact.create(width, height, generateImage(width, height));
+    }
+    function generateImage(width, height, fillingFactorHint)
+    {
+        fillingFactorHint = fillingFactorHint || 0.5;
+
+        var filling = 0;
+        var image = Array.apply(null, Array(width * height)).map(function () {return false;});
+        for (var i = 0; i < fillingFactorHint * width * height; i++) {
+            var row = randomInt(0, height - 1), col = randomInt(0, width - 1);
+            if ( ! image[row * width + col] ) filling++;
+            image[row * width + col] = true;
+        }
+        console.log("Generated new Picross image: filling factor is " + filling/(width*height) + "% (" + filling + " out of " + width*height + ")");
+
+        return image;
+    }
+}]);
+
+
+
+///
+/// Separating the picross view behaviour into a shared component, a play component and a won component.
+///
+
+// TODO: Add edit component for creating a puzzle?
+
+
+// Shared functionality for views
+function PicrossViewShared(picross, topHeaderSize, leftHeaderSize)
+{
+    this.topHeaderIndexToColumnHintIndex = topHeaderIndexToColumnHintIndex;
+    this.leftHeaderIndexToRowHintIndex = leftHeaderIndexToRowHintIndex;
+
+
+    // (this will be naturally filled in as we introduce more views and see their commonalities)
+
+
+    // Returns null if the index falls outside of the hint. 0 <= index < topHeaderSize.
+    function topHeaderIndexToColumnHintIndex(col, index, topHeaderSize)
+    {
+        var hintIndex = index - (topHeaderSize - picross.columnHints[col].length);
+        return (hintIndex >= 0 ? hintIndex : null);
+    }
+
+    // Returns null if the index falls outside of the hint. 0 <= index < leftHeaderSize.
+    function leftHeaderIndexToRowHintIndex(row, index, leftHeaderSize)
+    {
+        var hintIndex = index - (leftHeaderSize - picross.rowHints[row].length);
+        return (hintIndex >= 0 ? hintIndex : null);
+    }
+}
+
+
+
+
+
+
+
+// The core view, namely the Play the game view.
+function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
+{
+    ///
+    /// Public interface for View
+    ///
+
+    // 'Inherited' members (from shared)
+    this.topHeaderIndexToColumnHintIndex = shared.topHeaderIndexToColumnHintIndex;
+    this.leftHeaderIndexToRowHintIndex = shared.leftHeaderIndexToRowHintIndex;
+
+    // CSS styles for the HTML elements based on the current picross state
+    this.getStyleForField                 = getStyleForField;
+    this.getStyleForImage                 = getStyleForImage;
+    this.getPicrossTableCornerStyle       = getPicrossTableCornerStyle;
+    this.getPicrossTableTopHeaderStyle    = getPicrossTableTopHeaderStyle;
+    this.getPicrossTableLeftHeaderStyle   = getPicrossTableLeftHeaderStyle;
+    this.getPicrossTableCellStyle         = getPicrossTableCellStyle;
+    /// Input handling
+    this.tableCellMouseDown               = tableCellMouseDown;
+    this.tableCellMouseUp                 = tableCellMouseUp;
+    this.tableCellMouseEnter              = tableCellMouseEnter;
+    this.tableContextMenuHandler          = tableContextMenuHandler;
+    
+
 
 
     ///
@@ -102,7 +260,7 @@ angular.module('picross')
     function getPicrossTableTopHeaderStyle(row, col)
     {
         var classes = '';
-        var emptyCell = (topHeaderIndexToColumnHintIndex(col, row, topHeaderSize) == null);
+        var emptyCell = (this.topHeaderIndexToColumnHintIndex(col, row, topHeaderSize) == null);
         if (col > 0 && col % 5 == 0) classes += 'col-separator ';
         if (emptyCell) classes += 'empty-header-cell ';
         else classes += 'top-header-cell ';
@@ -117,7 +275,7 @@ angular.module('picross')
     function getPicrossTableLeftHeaderStyle(row, col)
     {
         var classes = '';
-        var emptyCell = (leftHeaderIndexToRowHintIndex(row, col, leftHeaderSize) == null);
+        var emptyCell = (this.leftHeaderIndexToRowHintIndex(row, col, leftHeaderSize) == null);
         if (row > 0 && row % 5 == 0) classes += 'row-separator ';
         if (emptyCell) classes += 'empty-header-cell ';
         else classes += 'left-header-cell ';
@@ -344,81 +502,4 @@ angular.module('picross')
         else if (jsButton == 1) return MiddleButton;
         else return LeftButton;
     }
-    
-    // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
-    // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
-    // TODO: Also use the picross-container enter/leave event (or maybe the other one) to your advantage
-
-
-
-    ///
-    /// Functions to infer size of top and left headers from the row and column hints
-    ///
-
-    function topHeaderFromHints(picross, topHeaderSize)
-    {
-        return rangeArray(0, topHeaderSize).map(
-            getTopHeaderRow.bind(null, picross.width, picross.columnHints, topHeaderSize));
-    }
-
-    function leftHeaderFromHints(picross, leftHeaderSize)
-    {
-        return rangeArray(0, picross.height).map(
-            function (hints, leftHeaderSize, row) {
-                var hint = hints[row];
-                var pad = leftHeaderSize - hint.length;
-                return createArray(pad, "").concat(hint);
-            }.bind(null, picross.rowHints, leftHeaderSize));
-    }
-
-    function getTopHeaderRow(width, hints, topHeaderSize, headerRow)
-    {
-        var header = [];
-        for (var col = 0; col < width; col++)
-        {
-            var hint = hints[col];
-            var index = topHeaderIndexToColumnHintIndex(col, headerRow, topHeaderSize);
-            header.push(index != null ? hint[index] : "");
-        }
-        return header;
-    }
-
-    // Returns null if the index falls outside of the hint. 0 <= index < topHeaderSize.
-    function topHeaderIndexToColumnHintIndex(col, index, topHeaderSize)
-    {
-        var hintIndex = index - (topHeaderSize - picross.columnHints[col].length);
-        return (hintIndex >= 0 ? hintIndex : null);
-    }
-
-    // Returns null if the index falls outside of the hint. 0 <= index < leftHeaderSize.
-    function leftHeaderIndexToRowHintIndex(row, index, leftHeaderSize)
-    {
-        var hintIndex = index - (leftHeaderSize - picross.rowHints[row].length);
-        return (hintIndex >= 0 ? hintIndex : null);
-    }
-
-
-    ///
-    /// Picross generation
-    ///
-
-    function generatePicross(width, height)
-    {
-        return picrossFact.create(width, height, generateImage(width, height));
-    }
-    function generateImage(width, height, fillingFactorHint)
-    {
-        fillingFactorHint = fillingFactorHint || 0.5;
-
-        var filling = 0;
-        var image = Array.apply(null, Array(width * height)).map(function () {return false;});
-        for (var i = 0; i < fillingFactorHint * width * height; i++) {
-            var row = randomInt(0, height - 1), col = randomInt(0, width - 1);
-            if ( ! image[row * width + col] ) filling++;
-            image[row * width + col] = true;
-        }
-        console.log("Generated new Picross image: filling factor is " + filling/(width*height) + "% (" + filling + " out of " + width*height + ")");
-
-        return image;
-    }
-}]);
+}
