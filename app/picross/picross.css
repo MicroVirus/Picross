@@ -15,6 +15,11 @@
     padding: 1px 1px 1px 1px;
 }
 
+.picross-table td.show-image {
+    border: 0;
+    padding: 0;
+}
+
 .picross-table .field-ticked, .picross-table .field-unticked, .picross-table .field-crossed {
     display: block;
     width: 100%;

@@ -75,6 +75,7 @@ angular.module('picross')
         // Activate a view
         sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize);
         view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize);
+        //view = new PicrossGameFinishedView(sharedView, picross, topHeaderSize, leftHeaderSize);
     }
 
     function bindViewToScope(view)
@@ -168,14 +169,13 @@ angular.module('picross')
 // TODO: Add edit component for creating a puzzle?
 
 
-// Shared functionality for views
+// Shared functionality for views.
+// Note: Shared functions can't use 'this' in the current design.
+// TODO: Redo the inheritance properly.
 function PicrossViewShared(picross, topHeaderSize, leftHeaderSize)
 {
     this.topHeaderIndexToColumnHintIndex = topHeaderIndexToColumnHintIndex;
     this.leftHeaderIndexToRowHintIndex = leftHeaderIndexToRowHintIndex;
-
-
-    // (this will be naturally filled in as we introduce more views and see their commonalities)
 
 
     // Returns null if the index falls outside of the hint. 0 <= index < topHeaderSize.
@@ -206,7 +206,7 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
     /// Public interface for View
     ///
 
-    // 'Inherited' members (from shared)
+    // Helper functions
     this.topHeaderIndexToColumnHintIndex = shared.topHeaderIndexToColumnHintIndex;
     this.leftHeaderIndexToRowHintIndex = shared.leftHeaderIndexToRowHintIndex;
 
@@ -492,6 +492,130 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
             return picross.Crossed;
         else if (button == MiddleButton || (shift && button == LeftButton))
             return picross.Unticked;
+    }
+
+    // Handle that event.button uses wildly different values than event.buttons. We use the buttons (flag) convention.
+    function jsToButtons(jsButton)
+    {
+        if (jsButton == 0) return LeftButton;
+        else if (jsButton == 2) return RightButton;
+        else if (jsButton == 1) return MiddleButton;
+        else return LeftButton;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// The view for when the game is finished
+function PicrossGameFinishedView(shared, picross, topHeaderSize, leftHeaderSize)
+{
+    ///
+    /// Public interface for View
+    ///
+
+    // Helper functions
+    this.topHeaderIndexToColumnHintIndex = shared.topHeaderIndexToColumnHintIndex;
+    this.leftHeaderIndexToRowHintIndex = shared.leftHeaderIndexToRowHintIndex;
+
+    // CSS styles for the HTML elements based on the current picross state
+    this.getStyleForField                 = getStyleForField;
+    this.getStyleForImage                 = getStyleForImage;
+    this.getPicrossTableCornerStyle       = getPicrossTableCornerStyle;
+    this.getPicrossTableTopHeaderStyle    = getPicrossTableTopHeaderStyle;
+    this.getPicrossTableLeftHeaderStyle   = getPicrossTableLeftHeaderStyle;
+    this.getPicrossTableCellStyle         = getPicrossTableCellStyle;
+    /// Input handling
+    this.tableCellMouseDown               = tableCellMouseDown;
+    this.tableCellMouseUp                 = tableCellMouseUp;
+    this.tableCellMouseEnter              = tableCellMouseEnter;
+    this.tableContextMenuHandler          = tableContextMenuHandler;
+
+
+
+
+    ///
+    /// View functions
+    ///
+
+    function getStyleForField(row, col)
+    {
+        return picross.image[row * picross.width + col] ? 'field-ticked' : 'field-unticked';
+    }
+
+    function getStyleForImage(row, col)
+    {
+        return picross.image[row * picross.width + col] ? 'field-ticked' : 'field-unticked';
+    }
+
+    function getPicrossTableCornerStyle(row, col)
+    {
+        return 'corner-empty-piece';
+    }
+
+    function getPicrossTableTopHeaderStyle(row, col)
+    {
+        return 'empty-header-cell';
+    }
+
+    function getPicrossTableLeftHeaderStyle(row, col)
+    {
+        return 'empty-header-cell';
+    }
+
+    function getPicrossTableCellStyle(row, col)
+    {
+        return 'show-image';
+    }
+
+
+
+    ///
+    /// Input handling
+    ///
+
+    const LeftButton = 1;       //
+    const RightButton = 2;      // (event.buttons convention)
+    const MiddleButton = 4;     //
+
+    var mouseInput = {
+        // Non-pressed state
+        hover: {row: undefined, col: undefined}
+    };
+
+
+    function tableCellMouseDown(event, row, col)
+    {
+        //event = event || $window.event;
+        return false;
+    }
+
+    function tableCellMouseUp(event, row, col) {
+        //event = event || $window.event;
+        return false;
+    }
+
+    function tableCellMouseEnter(event, row, col)
+    {
+        //event = event || $window.event;
+        mouseInput.hover.row = row;
+        mouseInput.hover.col = col;
+    }
+
+    function tableContextMenuHandler(event, row, col)
+    {
+        //event = event || $window.event;
+        return false;
     }
 
     // Handle that event.button uses wildly different values than event.buttons. We use the buttons (flag) convention.
