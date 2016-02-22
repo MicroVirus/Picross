@@ -143,11 +143,15 @@ angular.module('picross')
 
     function isRowDragActive(row)
     {
-        return mouseInput.pressed && mouseInput.drag.row == row;
+        return mouseInput.pressed &&
+            DragFixing.isRowConfined(mouseInput.fixing) &&
+            mouseInput.start.row == row;
     }
     function isColDragActive(col)
     {
-        return mouseInput.pressed && mouseInput.drag.col == col;
+        return mouseInput.pressed &&
+            DragFixing.isColConfined(mouseInput.fixing) &&
+            mouseInput.start.col == col;
     }
 
 
@@ -160,6 +164,15 @@ angular.module('picross')
     const RightButton = 2;      // (event.buttons convention)
     const MiddleButton = 4;     //
 
+    // Drag fixing to tick only within the same row or column. None is freeform-mode, RowColumnUndecided is initial mode.
+    const DragFixing = {
+        None: 0, Column: 1, Row: 2, RowColumnUndecided: 3,
+
+        isRowConfined: function (fix) {return fix == DragFixing.Row || fix == DragFixing.RowColumnUndecided;},
+        isColConfined: function (fix) {return fix == DragFixing.Column || fix == DragFixing.RowColumnUndecided;}
+    };
+    Object.freeze(DragFixing);
+
     var buttonToTicking = {};
     buttonToTicking[LeftButton] = picross.Ticked;
     buttonToTicking[RightButton] = picross.Crossed;
@@ -171,6 +184,7 @@ angular.module('picross')
         button: LeftButton,
         start: {fieldValue: picross.Unticked, row: undefined, col: undefined},
         drag: {row: undefined, col: undefined},
+        fixing: DragFixing.None,
         // Non-pressed state
         hover: {row: undefined, col: undefined}
     };
@@ -225,7 +239,18 @@ angular.module('picross')
         {
             mouseInput.drag.row = row;
             mouseInput.drag.col = col;
-            performTick(buttonToTicking[mouseInput.button], row, col);
+            // Update drag fixing: transition from row/column-undecided to either row or column.
+            if (mouseInput.fixing == DragFixing.RowColumnUndecided &&
+                (mouseInput.start.row != row || mouseInput.start.col != col)) // position other than start.
+            {
+                if (row == mouseInput.start.row)
+                    mouseInput.fixing = DragFixing.Row;
+                else if (col == mouseInput.start.col)
+                    mouseInput.fixing = DragFixing.Column;
+            }
+            // Verify drag-fixing allows us to tick this field, then do so.
+            if (dragfixCanTick(mouseInput.fixing, row, col, mouseInput.start.row, mouseInput.start.col))
+                performTick(buttonToTicking[mouseInput.button], row, col);
         }
     }
 
@@ -244,6 +269,7 @@ angular.module('picross')
         mouseInput.start.col = col;
         mouseInput.drag.row = row;
         mouseInput.drag.col = col;
+        mouseInput.fixing = DragFixing.RowColumnUndecided;
     }
 
     function endTickDrag(button, row, col)
@@ -284,6 +310,22 @@ angular.module('picross')
         }
     }
 
+    function dragfixCanTick(fix, row, col, startRow, startCol)
+    {
+        switch (fix) {
+            case DragFixing.Row:
+                return row == startRow;
+            case DragFixing.Column:
+                return col == startCol;
+            case DragFixing.RowColumnUndecided:
+                return (row == startRow || col == startCol);
+            case DragFixing.None:
+                return true;
+            default:
+                throw "Unknown dragfix option"
+        }
+    }
+
     // Handle that event.button uses wildly different values than event.buttons. We use the buttons (flag) convention.
     function jsToButtons(jsButton)
     {
@@ -293,8 +335,7 @@ angular.module('picross')
         else return LeftButton;
     }
 
-    // NEXT STEP: Handle row/col-fixing: once you start ticking within a row or col, disallow ticking outside of that row/col.
-    // THEN: Handle modifiers (e.g. Shift) to force unticking.
+    // NEXT STEP: Handle modifiers (e.g. Shift) to force unticking.
     // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
     // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
     // TODO: Also use the picross-container enter/leave event (or maybe the other one) to your advantage
