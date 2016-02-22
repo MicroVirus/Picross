@@ -9,10 +9,10 @@
     <tr ng-repeat="headerRow in topHeaderRows">
         <!-- NB: I somewhat dislike the leftHeaderRows[0] here, but c'est la vie. -->
         <th ng-repeat="leftHeaderRow in leftHeaderRows[0] track by $index" class="{{getPicrossTableCornerStyle($parent.$index, $index)}}"></th>
-        <th ng-repeat="col in headerRow track by $index" class="{{getPicrossTableTopHeaderStyle($parent.$index, $index)}}">{{col}}</th>
+        <th ng-repeat="col in headerRow track by $index" class="{{getPicrossTableTopHeaderStyle($parent.$index, $index)}}"><span ng-hide="!shouldDisplayHeader()">{{col}}</span></th>
     </tr>
     <tr ng-repeat="headerRow in leftHeaderRows">
-        <th ng-repeat="col in headerRow track by $index" class="{{getPicrossTableLeftHeaderStyle($parent.$index, $index)}}">{{col}}</th>
+        <th ng-repeat="col in headerRow track by $index" class="{{getPicrossTableLeftHeaderStyle($parent.$index, $index)}}"><span ng-hide="!shouldDisplayHeader()">{{col}}</span></th>
         <td ng-repeat="col in picross.columnHints"
             ng-mousedown="tableCellMouseDown($event, $parent.$index, $index)"
             ng-mouseup="tableCellMouseUp($event, $parent.$index, $index)"

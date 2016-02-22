@@ -45,6 +45,7 @@ angular.module('picross')
     // CSS styles for the HTML elements based on the current picross state
     $scope.getStyleForField                 = undefined;
     $scope.getStyleForImage                 = undefined;
+    $scope.shouldDisplayHeader              = undefined;
     $scope.getPicrossTableCornerStyle       = undefined;
     $scope.getPicrossTableTopHeaderStyle    = undefined;
     $scope.getPicrossTableLeftHeaderStyle   = undefined;
@@ -83,6 +84,7 @@ angular.module('picross')
         // CSS styles for the HTML elements based on the current picross state
         $scope.getStyleForField                 = view.getStyleForField.bind(view);
         $scope.getStyleForImage                 = view.getStyleForImage.bind(view);
+        $scope.shouldDisplayHeader              = view.shouldDisplayHeader.bind(view);
         $scope.getPicrossTableCornerStyle       = view.getPicrossTableCornerStyle.bind(view);
         $scope.getPicrossTableTopHeaderStyle    = view.getPicrossTableTopHeaderStyle.bind(view);
         $scope.getPicrossTableLeftHeaderStyle   = view.getPicrossTableLeftHeaderStyle.bind(view);
@@ -213,6 +215,7 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
     // CSS styles for the HTML elements based on the current picross state
     this.getStyleForField                 = getStyleForField;
     this.getStyleForImage                 = getStyleForImage;
+    this.shouldDisplayHeader              = shouldDisplayHeader;
     this.getPicrossTableCornerStyle       = getPicrossTableCornerStyle;
     this.getPicrossTableTopHeaderStyle    = getPicrossTableTopHeaderStyle;
     this.getPicrossTableLeftHeaderStyle   = getPicrossTableLeftHeaderStyle;
@@ -246,6 +249,11 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
     function getStyleForImage(row, col)
     {
         return picross.image[row * picross.width + col] ? 'field-ticked' : 'field-unticked';
+    }
+
+    function shouldDisplayHeader()
+    {
+        return true;
     }
 
     function getPicrossTableCornerStyle(row, col)
@@ -531,6 +539,7 @@ function PicrossGameFinishedView(shared, picross, topHeaderSize, leftHeaderSize)
     // CSS styles for the HTML elements based on the current picross state
     this.getStyleForField                 = getStyleForField;
     this.getStyleForImage                 = getStyleForImage;
+    this.shouldDisplayHeader              = shouldDisplayHeader;
     this.getPicrossTableCornerStyle       = getPicrossTableCornerStyle;
     this.getPicrossTableTopHeaderStyle    = getPicrossTableTopHeaderStyle;
     this.getPicrossTableLeftHeaderStyle   = getPicrossTableLeftHeaderStyle;
@@ -556,6 +565,11 @@ function PicrossGameFinishedView(shared, picross, topHeaderSize, leftHeaderSize)
     function getStyleForImage(row, col)
     {
         return picross.image[row * picross.width + col] ? 'field-ticked' : 'field-unticked';
+    }
+
+    function shouldDisplayHeader()
+    {
+        return false;
     }
 
     function getPicrossTableCornerStyle(row, col)
