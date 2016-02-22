@@ -34,6 +34,19 @@ function Picross(width, height, image) {
     // Playing field
     this.field = createArray(width * height, this.Unticked);
 
+    // Methods
+    this.isFinished = isFinished;
+
+
+
+    // Returns true if the Picross is finished (all fields match with image)
+    function isFinished()
+    {
+        return this.field.every(function (fieldValue, index) {
+            var imageEqvValue = fieldValue == this.Crossed ? this.Unticked : fieldValue;
+            return !!imageEqvValue == !!this.image[index];
+        }, this);
+    }
 
 
     ///

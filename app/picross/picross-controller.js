@@ -30,6 +30,7 @@ angular.module('picross')
     var leftHeaderSize;
     var sharedView;
     var view;
+    var callbackObject;
 
 
     // Initialise member variables
@@ -70,13 +71,14 @@ angular.module('picross')
     function activate()
     {
         picross = generatePicross(15, 15);
+        //picross = generatePicross(5, 5); // Quicker testing of transition from played to finished
         // Calculate top and left header sizes
         topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
         leftHeaderSize = Math.max.apply(Math, picross.rowHints.map(function (arr) {return arr.length;}));
         // Activate a view
-        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize);
-        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize);
-        //view = new PicrossGameFinishedView(sharedView, picross, topHeaderSize, leftHeaderSize);
+        callbackObject = {onFieldChanged: fieldChangedCallback};
+        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize, callbackObject);
+        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
     }
 
     function bindViewToScope(view)
@@ -101,6 +103,23 @@ angular.module('picross')
     // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
     // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
     // TODO: Also use the picross-container enter/leave event (or maybe the other one) to your advantage
+
+
+
+    ///
+    /// Game logic and view transition
+    ///
+
+    function fieldChangedCallback(row, col)
+    {
+        // TODO: This check has some 'Shlemiel the Painter' influence that we can optimise out, so do this when you feel like it.
+        if (picross.isFinished()) {
+            // Change views to finished game
+            view = new PicrossGameFinishedView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
+            bindViewToScope(view);
+        }
+    }
+
 
 
 
@@ -174,7 +193,7 @@ angular.module('picross')
 // Shared functionality for views.
 // Note: Shared functions can't use 'this' in the current design.
 // TODO: Redo the inheritance properly.
-function PicrossViewShared(picross, topHeaderSize, leftHeaderSize)
+function PicrossViewShared(picross, topHeaderSize, leftHeaderSize, callback)
 {
     this.topHeaderIndexToColumnHintIndex = topHeaderIndexToColumnHintIndex;
     this.leftHeaderIndexToRowHintIndex = leftHeaderIndexToRowHintIndex;
@@ -202,8 +221,11 @@ function PicrossViewShared(picross, topHeaderSize, leftHeaderSize)
 
 
 // The core view, namely the Play the game view.
-function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
+//TODO: Use AngularJS injection, somehow, to get $window injected.
+function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize, callback)
 {
+    var $window = window;
+
     ///
     /// Public interface for View
     ///
@@ -472,6 +494,9 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
         {
             picross.field[row * picross.width + col] = tick;
         }
+
+        // Callback to parent.
+        callback.onFieldChanged(row, col);
     }
 
     function dragfixCanTick(fix, row, col, startRow, startCol)
@@ -526,7 +551,7 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize)
 
 
 // The view for when the game is finished
-function PicrossGameFinishedView(shared, picross, topHeaderSize, leftHeaderSize)
+function PicrossGameFinishedView(shared, picross, topHeaderSize, leftHeaderSize, callback)
 {
     ///
     /// Public interface for View
