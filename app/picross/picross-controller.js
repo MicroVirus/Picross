@@ -232,7 +232,8 @@ angular.module('picross')
 
         if (mouseInput.pressed)
         {
-            // Update drag fixing: transition from row/column-undecided to either row or column.
+            // Update drag fixing. Transition from row/column-undecided to either row or column.
+            if (event.altKey) mouseInput.fixing = DragFixing.None;
             if (mouseInput.fixing == DragFixing.RowColumnUndecided &&
                 (mouseInput.start.row != row || mouseInput.start.col != col)) // position other than start.
             {
@@ -343,8 +344,7 @@ angular.module('picross')
         else if (jsButton == 1) return MiddleButton;
         else return LeftButton;
     }
-
-    // NEXT STEP: Handle modifiers (e.g. Shift) to force unticking.
+    
     // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
     // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
     // TODO: Also use the picross-container enter/leave event (or maybe the other one) to your advantage
