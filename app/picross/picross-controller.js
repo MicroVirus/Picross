@@ -148,7 +148,7 @@ angular.module('picross')
     var mouseInput = {
         pressed: false,
         button: LeftButton,
-        start: {row: undefined, col: undefined},
+        start: {fieldValue: picross.Unticked, row: undefined, col: undefined},
         hover: {row: undefined, col: undefined}
     };
 
@@ -213,6 +213,7 @@ angular.module('picross')
     {
         mouseInput.pressed = true;
         mouseInput.button = button;
+        mouseInput.start.fieldValue = picross.field[row * picross.width + col];
         mouseInput.start.row = row;
         mouseInput.start.col = col;
         mouseInput.hover.row = row;
@@ -226,7 +227,35 @@ angular.module('picross')
 
     function performTick(tick, row, col)
     {
-        picross.field[row * picross.width + col] = tick;
+        // Contextual ticking: the ticking action depends on the initial field and the button action (tick).
+        //
+        //  Initial Field        Action (tick)       Result
+        //  -------------        -------------       ------------
+        //  Unticked             Unticked            <tick>
+        //  Unticked             *                   Any Unticked -> <tick>
+        //  Ticked               Ticked              Any Ticked -> Unticked
+        //  Ticked               *                   <tick>
+        //  Crossed              Crossed             Any Crossed -> Unticked
+        //  Crossed              *                   <tick>
+        //
+
+        var initial = mouseInput.start.fieldValue;
+        var currentValue = picross.field[row * picross.width + col];
+
+        if (initial == picross.Unticked && tick != picross.Unticked)
+        {
+            if (currentValue == picross.Unticked)
+                picross.field[row * picross.width + col] = tick;
+        }
+        else if (initial != picross.Unticked && initial == tick)
+        {
+            if (currentValue == initial)
+                picross.field[row * picross.width + col] = picross.Unticked;
+        }
+        else
+        {
+            picross.field[row * picross.width + col] = tick;
+        }
     }
 
     // Handle that event.button uses wildly different values than event.buttons. We use the buttons (flag) convention.
@@ -238,8 +267,7 @@ angular.module('picross')
         else return LeftButton;
     }
 
-    // NEXT STEP: Handle contextual clicks, e.g. starting at ticked means you're unticking.
-    // THEN: Handle row/col-fixing: once you start ticking within a row or col, disallow ticking outside of that row/col.
+    // NEXT STEP: Handle row/col-fixing: once you start ticking within a row or col, disallow ticking outside of that row/col.
     // THEN: Handle modifiers (e.g. Shift) to force unticking.
     // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
     // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
