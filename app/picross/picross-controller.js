@@ -173,11 +173,6 @@ angular.module('picross')
     };
     Object.freeze(DragFixing);
 
-    var buttonToTicking = {};
-    buttonToTicking[LeftButton] = picross.Ticked;
-    buttonToTicking[RightButton] = picross.Crossed;
-    buttonToTicking[MiddleButton] = picross.Unticked;
-
     var mouseInput = {
         // Pressed state
         pressed: false,
@@ -195,7 +190,7 @@ angular.module('picross')
 
         // Start a ticking operation; override any buttons that are currently pressed with the new button.
         beginTickDrag(jsToButtons(event.button), row, col);
-        performTick(buttonToTicking[mouseInput.button], row, col)
+        performTick(buttonToTickAction(mouseInput.button, event.shiftKey), row, col)
     }
 
     function tableCellMouseUp(event, row, col) {
@@ -237,8 +232,6 @@ angular.module('picross')
 
         if (mouseInput.pressed)
         {
-            mouseInput.drag.row = row;
-            mouseInput.drag.col = col;
             // Update drag fixing: transition from row/column-undecided to either row or column.
             if (mouseInput.fixing == DragFixing.RowColumnUndecided &&
                 (mouseInput.start.row != row || mouseInput.start.col != col)) // position other than start.
@@ -250,7 +243,11 @@ angular.module('picross')
             }
             // Verify drag-fixing allows us to tick this field, then do so.
             if (dragfixCanTick(mouseInput.fixing, row, col, mouseInput.start.row, mouseInput.start.col))
-                performTick(buttonToTicking[mouseInput.button], row, col);
+            {
+                mouseInput.drag.row = row;
+                mouseInput.drag.col = col;
+                performTick(buttonToTickAction(mouseInput.button, event.shiftKey), row, col);
+            }
         }
     }
 
@@ -324,6 +321,18 @@ angular.module('picross')
             default:
                 throw "Unknown dragfix option"
         }
+    }
+
+    // Map button (plus modifiers) to ticking actions.
+    function buttonToTickAction(button, shift)
+    {
+        // Shift + Left-button is an alternative to middle-button
+        if (button == LeftButton && !shift)
+            return picross.Ticked;
+        else if (button == RightButton)
+            return picross.Crossed;
+        else if (button == MiddleButton || (shift && button == LeftButton))
+            return picross.Unticked;
     }
 
     // Handle that event.button uses wildly different values than event.buttons. We use the buttons (flag) convention.
