@@ -1,3 +1,8 @@
+.picross-container {
+    padding: 20px 20px 80px 100px;
+    background-color: #f4f3f7;
+}
+
 .picross-table {
     /* border: 1px solid black; */
     table-layout: fixed;
@@ -84,5 +89,5 @@
 
 .picross-table .field-unticked
 {
-    background-color: white;
+    background-color: inherit;
 }

@@ -22,11 +22,13 @@ angular.module('picross')
     };
 })
 
-.controller('PicrossCtrl', ['$scope', 'picrossFactory', function($scope, picrossFact) {
+.controller('PicrossCtrl', ['$scope', 'picrossFactory', '$window', function($scope, picrossFact, $window) {
+
     // Private member variables
     var picross;
     var topHeaderSize;
     var leftHeaderSize;
+
 
     // Initialise member variables
     activate();
@@ -129,58 +131,119 @@ angular.module('picross')
     }
 
 
+
     ///
     /// Input handling
     ///
 
-    var mouseInput = {pressed: false, start: {row: undefined, col: undefined}, hover: {row: undefined, col: undefined}};
+    const LeftButton = 1;       //
+    const RightButton = 2;      // (event.buttons convention)
+    const MiddleButton = 4;     //
+
+    var buttonToTicking = {};
+    buttonToTicking[LeftButton] = picross.Ticked;
+    buttonToTicking[RightButton] = picross.Crossed;
+    buttonToTicking[MiddleButton] = picross.Unticked;
+
+    var mouseInput = {
+        pressed: false,
+        button: LeftButton,
+        start: {row: undefined, col: undefined},
+        hover: {row: undefined, col: undefined}
+    };
 
     function tableCellMouseDown(event, row, col)
     {
-        event = event || window.event;
-        if (event.button == 0)
-        {
-            mouseInput.pressed = true;
-            mouseInput.start.row = row;
-            mouseInput.start.col = col;
+        event = event || $window.event;
 
-            $scope.picross.field[row * picross.width + col] = picross.Ticked;
+        // Start a ticking operation; override any buttons that are currently pressed with the new button.
+        beginTickDrag(jsToButtons(event.button), row, col);
+        performTick(buttonToTicking[mouseInput.button], row, col)
+    }
+
+    function tableCellMouseUp(event, row, col) {
+        event = event || $window.event;
+
+        // If the same button went 'up' as the current ticking-operation then cancel the operation.
+        if (mouseInput.pressed && jsToButtons(event.button) == mouseInput.button)
+        {
+            endTickDrag(jsToButtons(event.button), row, col);
         }
     }
-    function tableCellMouseUp(event, row, col)
-    {
-        event = event || window.event;
 
-        mouseInput.pressed = false;
-        mouseInput.start.row = row;
-        mouseInput.start.col = col;
-    }
     function tableCellMouseEnter(event, row, col)
     {
-        event = event || window.event;
+        event = event || $window.event;
 
-        // If the mouse went 'up!' outside our area, cancel the dragging
-        // TODO: If you add WHICH button to mouseInput, also respond to if that one is no longer clicked.
-        //       Use buttons rather than button property.
-        if (event.buttons == 0)
+        // If the mouse went 'up' outside our area, cancel the ticking
+        if (mouseInput.pressed && (event.buttons & mouseInput.button) == 0)
         {
-            mouseInput.pressed = false;
+            endTickDrag(mouseInput.button, row, col);
         }
 
-        if (event.button == 0 && mouseInput.pressed)
+        // If a mouse button went 'down' outside our area and we aren't ticking then start a new ticking
+        if (!mouseInput.pressed && event.buttons != 0)
         {
-            picross.field[row * picross.width + col] = picross.Ticked;
+            // Select the new button; Middle > Right > Left on ties.
+            if ((event.buttons & MiddleButton) != 0)
+                beginTickDrag(MiddleButton, row, col);
+            else if ((event.buttons & RightButton) != 0)
+                beginTickDrag(RightButton, row, col);
+            else if ((event.buttons & LeftButton) != 0)
+                beginTickDrag(LeftButton, row, col);
+            else
+                beginTickDrag(LeftButton, row, col);
+        }
+
+        if (mouseInput.pressed)
+        {
             mouseInput.hover.row = row;
             mouseInput.hover.col = col;
+            performTick(buttonToTicking[mouseInput.button], row, col);
         }
     }
+
     function tableContextMenuHandler(event, row, col)
     {
-        event = event || window.event;
+        //event = event || $window.event;
         return false;
     }
-    // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
 
+    function beginTickDrag(button, row, col)
+    {
+        mouseInput.pressed = true;
+        mouseInput.button = button;
+        mouseInput.start.row = row;
+        mouseInput.start.col = col;
+        mouseInput.hover.row = row;
+        mouseInput.hover.col = col;
+    }
+
+    function endTickDrag(button, row, col)
+    {
+        mouseInput.pressed = false;
+    }
+
+    function performTick(tick, row, col)
+    {
+        picross.field[row * picross.width + col] = tick;
+    }
+
+    // Handle that event.button uses wildly different values than event.buttons. We use the buttons (flag) convention.
+    function jsToButtons(jsButton)
+    {
+        if (jsButton == 0) return LeftButton;
+        else if (jsButton == 2) return RightButton;
+        else if (jsButton == 1) return MiddleButton;
+        else return LeftButton;
+    }
+
+    // NEXT STEP: Handle contextual clicks, e.g. starting at ticked means you're unticking.
+    // THEN: Handle row/col-fixing: once you start ticking within a row or col, disallow ticking outside of that row/col.
+    // THEN: Handle modifiers (e.g. Shift) to force unticking.
+    // TODO: Also allow mouse input to start from a header, and perhaps also add an 'invisble' edge right and bottom so we can catch input from there too.
+    // TODO: If the mouse enters a field and if mouseInput says we're not pressed then we can start a new pressed on that field.
+    // TODO: Also use the picross-container enter/leave event (or maybe the other one) to your advantage
 
 
 
@@ -247,7 +310,7 @@ angular.module('picross')
         var image = Array.apply(null, Array(width * height)).map(function () {return false;});
         for (var i = 0; i < fillingFactorHint * width * height; i++) {
             var row = randomInt(0, height - 1), col = randomInt(0, width - 1);
-            if ( ! image[row * width + col]) filling++;
+            if ( ! image[row * width + col] ) filling++;
             image[row * width + col] = true;
         }
         console.log("Generated new Picross image: filling factor is " + filling/(width*height) + "% (" + filling + " out of " + width*height + ")");
