@@ -117,3 +117,15 @@
 .picross-table .drag-active {
     background-color: rgba(170,170,255,0.2);
 }
+
+
+
+
+
+
+
+
+/* Controls */
+.picross-controls .number-input {
+    width: 3em;
+}

@@ -45,6 +45,7 @@ angular.module('picross')
     {
         // -- Bind all scope functionality that remains unchanged for the lifetime of the controller
         $scope.startNewGame                     = startNewGame;
+        $scope.configuration                    = {width: 15, height: 15};
     }
     function bindPicrossToScope(picross, topHeaderSize, leftHeaderSize)
     {
@@ -99,7 +100,8 @@ angular.module('picross')
 
     function startNewGame()
     {
-        picross = generatePicross(15, 15);
+        fixupConfiguration();
+        picross = generatePicross($scope.configuration.width, $scope.configuration.height);
         //picross = generatePicross(5, 5); // Quicker testing of transition from played to finished
         // Calculate top and left header sizes
         topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
@@ -121,6 +123,23 @@ angular.module('picross')
             bindViewToScope(view);
         }
     }
+
+
+    ///
+    /// Picross controls interaction
+    ///
+
+    function fixupConfiguration()
+    {
+        // To integer trick ' | 0': http://stackoverflow.com/a/12837315/2718186
+        var width = $scope.configuration.width | 0;
+        var height = $scope.configuration.height | 0;
+        if (width < 1) width = 1;
+        if (height < 1) height = 1;
+        $scope.configuration.width = width;
+        $scope.configuration.height = height;
+    }
+
 
 
 
