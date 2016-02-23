@@ -4,8 +4,14 @@
 }
 
 .picross-table {
+    display: inline-table;
+    margin-right: 140px;
     /* border: 1px solid black; */
     table-layout: fixed;
+}
+
+.picross-controls {
+    display: inline-block;
 }
 
 .picross-table th, .picross-table td {

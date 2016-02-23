@@ -3,7 +3,9 @@
 <h1>Picross</h1>
 
 <p>Picross of {{picross.width}} x {{picross.height}}</p>
+
 <div class="picross-container" ondragstart="return false;" ondrop="return false;" ng-contextmenu="tableContextMenuHandler($event, $parent.$index, $index)">
+
 <table class="picross-table noselect">
     <!-- Hint headers -->
     <tr ng-repeat="headerRow in topHeaderRows">
@@ -23,6 +25,11 @@
         </td>
     </tr>
 </table>
+
+<div class="picross-controls">
+    <button type="button" title="Start a new game" ng-click="startNewGame()">New Game</button>
+</div>
+
 </div>
 
 <h2>Controls</h2>

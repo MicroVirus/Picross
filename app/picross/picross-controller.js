@@ -33,7 +33,7 @@ angular.module('picross')
     var callbackObject;
 
 
-    // Initialise member variables
+    // Activate controller
     activate();
 
 
@@ -41,48 +41,14 @@ angular.module('picross')
     /// View interface (scope members)
     ///
 
-    $scope.picross                          = picross;
-    // Note: the undefined functions are bound to a view at activation and view-switching.
-    // CSS styles for the HTML elements based on the current picross state
-    $scope.getStyleForField                 = undefined;
-    $scope.getStyleForImage                 = undefined;
-    $scope.shouldDisplayHeader              = undefined;
-    $scope.getPicrossTableCornerStyle       = undefined;
-    $scope.getPicrossTableTopHeaderStyle    = undefined;
-    $scope.getPicrossTableLeftHeaderStyle   = undefined;
-    $scope.getPicrossTableCellStyle         = undefined;
-    /// Input handling
-    $scope.tableCellMouseDown               = undefined;
-    $scope.tableCellMouseUp                 = undefined;
-    $scope.tableCellMouseEnter              = undefined;
-    $scope.tableContextMenuHandler          = undefined;
-
-    bindViewToScope(view);
-
-    $scope.topHeaderRows                    = topHeaderFromHints(picross, topHeaderSize);
-    $scope.leftHeaderRows                   = leftHeaderFromHints(picross, leftHeaderSize);
-
-
-
-    ///
-    /// Initialisation functions
-    ///
-
-    function activate()
+    function bindScopeOnActivate()
     {
-        picross = generatePicross(15, 15);
-        //picross = generatePicross(5, 5); // Quicker testing of transition from played to finished
-        // Calculate top and left header sizes
-        topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
-        leftHeaderSize = Math.max.apply(Math, picross.rowHints.map(function (arr) {return arr.length;}));
-        // Activate a view
-        callbackObject = {onFieldChanged: fieldChangedCallback};
-        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize, callbackObject);
-        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
+        // -- Bind all scope functionality that remains unchanged for the lifetime of the controller
+        $scope.startNewGame                     = startNewGame;
     }
-
     function bindViewToScope(view)
     {
+        // -- Bind all scope functionality that depends on the view
         // CSS styles for the HTML elements based on the current picross state
         $scope.getStyleForField                 = view.getStyleForField.bind(view);
         $scope.getStyleForImage                 = view.getStyleForImage.bind(view);
@@ -96,6 +62,27 @@ angular.module('picross')
         $scope.tableCellMouseUp                 = view.tableCellMouseUp.bind(view);
         $scope.tableCellMouseEnter              = view.tableCellMouseEnter.bind(view);
         $scope.tableContextMenuHandler          = view.tableContextMenuHandler.bind(view);
+    }
+    function bindPicrossToScope(picross, topHeaderSize, leftHeaderSize)
+    {
+        // -- Bind all scope functionality that depends on the picross
+        $scope.picross                          = picross;
+        $scope.topHeaderRows                    = topHeaderFromHints(picross, topHeaderSize);
+        $scope.leftHeaderRows                   = leftHeaderFromHints(picross, leftHeaderSize);
+    }
+
+
+
+
+
+    ///
+    /// Initialisation functions
+    ///
+
+    function activate()
+    {
+        bindScopeOnActivate();
+        startNewGame();
     }
 
 
@@ -120,6 +107,20 @@ angular.module('picross')
         }
     }
 
+    function startNewGame()
+    {
+        picross = generatePicross(15, 15);
+        //picross = generatePicross(5, 5); // Quicker testing of transition from played to finished
+        // Calculate top and left header sizes
+        topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
+        leftHeaderSize = Math.max.apply(Math, picross.rowHints.map(function (arr) {return arr.length;}));
+        // Activate playing view
+        callbackObject = {onFieldChanged: fieldChangedCallback};
+        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize, callbackObject);
+        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
+        bindViewToScope(view);
+        bindPicrossToScope(picross, topHeaderSize, leftHeaderSize);
+    }
 
 
 
@@ -166,7 +167,7 @@ angular.module('picross')
     }
     function generateImage(width, height, fillingFactorHint)
     {
-        fillingFactorHint = fillingFactorHint || 0.5;
+        fillingFactorHint = fillingFactorHint || 0.7;
 
         var filling = 0;
         var image = Array.apply(null, Array(width * height)).map(function () {return false;});
