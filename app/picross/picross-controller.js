@@ -360,12 +360,16 @@ function PicrossPlayView(shared, picross, topHeaderSize, leftHeaderSize, callbac
     {
         return mouseInput.pressed &&
             DragFixing.isRowConfined(mouseInput.fixing) &&
+            (mouseInput.fixing != DragFixing.RowColumnUndecided || /* Disable the 'crosshair' animation when we're still on the starting spot. */
+                (mouseInput.hover.row != mouseInput.start.row || mouseInput.hover.col != mouseInput.start.col)) &&
             mouseInput.start.row == row;
     }
     function isColDragActive(col)
     {
         return mouseInput.pressed &&
             DragFixing.isColConfined(mouseInput.fixing) &&
+            (mouseInput.fixing != DragFixing.RowColumnUndecided || /* Disable the 'crosshair' animation when we're still on the starting spot. */
+                (mouseInput.hover.row != mouseInput.start.row || mouseInput.hover.col != mouseInput.start.col)) &&
             mouseInput.start.col == col;
     }
 
