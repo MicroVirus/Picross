@@ -46,6 +46,13 @@ angular.module('picross')
         // -- Bind all scope functionality that remains unchanged for the lifetime of the controller
         $scope.startNewGame                     = startNewGame;
     }
+    function bindPicrossToScope(picross, topHeaderSize, leftHeaderSize)
+    {
+        // -- Bind all scope functionality that depends on the picross
+        $scope.picross                          = picross;
+        $scope.topHeaderRows                    = topHeaderFromHints(picross, topHeaderSize);
+        $scope.leftHeaderRows                   = leftHeaderFromHints(picross, leftHeaderSize);
+    }
     function bindViewToScope(view)
     {
         // -- Bind all scope functionality that depends on the view
@@ -62,13 +69,6 @@ angular.module('picross')
         $scope.tableCellMouseUp                 = view.tableCellMouseUp.bind(view);
         $scope.tableCellMouseEnter              = view.tableCellMouseEnter.bind(view);
         $scope.tableContextMenuHandler          = view.tableContextMenuHandler.bind(view);
-    }
-    function bindPicrossToScope(picross, topHeaderSize, leftHeaderSize)
-    {
-        // -- Bind all scope functionality that depends on the picross
-        $scope.picross                          = picross;
-        $scope.topHeaderRows                    = topHeaderFromHints(picross, topHeaderSize);
-        $scope.leftHeaderRows                   = leftHeaderFromHints(picross, leftHeaderSize);
     }
 
 
@@ -97,6 +97,21 @@ angular.module('picross')
     /// Game logic and view transition
     ///
 
+    function startNewGame()
+    {
+        picross = generatePicross(15, 15);
+        //picross = generatePicross(5, 5); // Quicker testing of transition from played to finished
+        // Calculate top and left header sizes
+        topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
+        leftHeaderSize = Math.max.apply(Math, picross.rowHints.map(function (arr) {return arr.length;}));
+        bindPicrossToScope(picross, topHeaderSize, leftHeaderSize);
+        // Activate playing view
+        callbackObject = {onFieldChanged: fieldChangedCallback};
+        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize, callbackObject);
+        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
+        bindViewToScope(view);
+    }
+
     function fieldChangedCallback(row, col)
     {
         // TODO: This check has some 'Shlemiel the Painter' influence that we can optimise out, so do this when you feel like it.
@@ -105,21 +120,6 @@ angular.module('picross')
             view = new PicrossGameFinishedView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
             bindViewToScope(view);
         }
-    }
-
-    function startNewGame()
-    {
-        picross = generatePicross(15, 15);
-        //picross = generatePicross(5, 5); // Quicker testing of transition from played to finished
-        // Calculate top and left header sizes
-        topHeaderSize = Math.max.apply(Math, picross.columnHints.map(function (arr) {return arr.length;}));
-        leftHeaderSize = Math.max.apply(Math, picross.rowHints.map(function (arr) {return arr.length;}));
-        // Activate playing view
-        callbackObject = {onFieldChanged: fieldChangedCallback};
-        sharedView = new PicrossViewShared(picross, topHeaderSize, leftHeaderSize, callbackObject);
-        view = new PicrossPlayView(sharedView, picross, topHeaderSize, leftHeaderSize, callbackObject);
-        bindViewToScope(view);
-        bindPicrossToScope(picross, topHeaderSize, leftHeaderSize);
     }
 
 
@@ -150,10 +150,17 @@ angular.module('picross')
         for (var col = 0; col < width; col++)
         {
             var hint = hints[col];
-            var index = view.topHeaderIndexToColumnHintIndex(col, headerRow, topHeaderSize);
+            var index = topHeaderIndexToColumnHintIndex(col, headerRow, topHeaderSize);
             header.push(index != null ? hint[index] : "");
         }
         return header;
+    }
+
+    // Returns null if the index falls outside of the hint. 0 <= index < topHeaderSize.
+    function topHeaderIndexToColumnHintIndex(col, index, topHeaderSize)
+    {
+        var hintIndex = index - (topHeaderSize - picross.columnHints[col].length);
+        return (hintIndex >= 0 ? hintIndex : null);
     }
 
 
